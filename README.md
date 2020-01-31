@@ -19,6 +19,8 @@ Field Crew | transect surveys, wetland dilineations
 GIS Analyst | georeferencing and digitizing historic maps
 COA Intern | watershed analysis
 
+Linked In Profile: [LinkedIn](https://www.linkedin.com/in/katarzyna-kos-2b1093135/)
+
 ## Peronsal
 
 When I'm not stressing about my future, I very much enjoy:
@@ -28,4 +30,9 @@ When I'm not stressing about my future, I very much enjoy:
 * a good ole film
 * puzzles with a bottle of wine
 
-I was actually _born in Poland_ and therefore I spent many summers visitng family back in the motherland and have caught quite a travel bug. There is just so much to learn and appreciate about differnt cultures in foreign places each with its own rich history. I would take a new adventure over material objects _anyday._ Cooking is a way I can connect with my culture as well as express my creativity.
+I was actually _born in Poland_ and therefore I spent many summers visitng family back in the motherland and have caught quite a travel bug. There is just so much to learn and appreciate about differnt cultures in foreign places each with its own rich history. I would take a new adventure over material objects _anyday._ Cooking is a way I can connect with my culture as well as express my creativity. 
+
+Here is a picture of me holding a Blue Jay when volunteered for a bird banding project:
+
+![Blue Jay Photo](https://scontent.fzty2-1.fna.fbcdn.net/v/t1.0-9/14568028_10211011684834305_7812449983958353566_n.jpg?_nc_cat=102&_nc_ohc=JGPI_JFz3DUAX-R3MgN&_nc_ht=scontent.fzty2-1.fna&oh=4e9c1d4318ff2b8c04f2ef492455e449&oe=5EC29F1B)
+
