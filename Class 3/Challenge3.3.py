@@ -39,7 +39,7 @@ with open("E:\KMK_Python\co2-ppm-daily-master\data\co2-ppm-daily.csv") as co2_cs
 # # Next I am defining what the total sum of values in row 2 is as well as the totals for each year
 # # By defining the variables I can more easily write the final equation
 #
-    for row in co2_csv:
+    for row in csv_reader:
         total_sum = sum(row[1])
         if year == year:
             year_sum = sum(row[1])
@@ -54,7 +54,7 @@ year_value_dict = {}
 
 for year in year_list:
     temp_year_list = []
-    with open("co2-ppm-daily.csv") as co2:
+    with open("co2-ppm-daily.csv") as co2: 
         csv_reader = csv.reader(co2, delimiter=',')
         headerline = co2.next()
 
