@@ -1,0 +1,68 @@
+# produce a small tool that takes advantage of arcpy and Python. You will need to provide example data, and the code
+# should run on all PC's. The tool needs to manipulate a dataset across three different processes, for example,
+# extracting, modifying and exporting data. The exact workflow is entirely up to yourself. You are expected to take
+# 3-4 hours on this coding assignment, and you should deposit your code and example files within a Github repository
+# for feedback and grading.
+
+
+# Workflow: Loosely recreate lab 5 from NRS 522 in code
+# Isolate South Kingston and set as extent, create buffer around water features, overlay and create suitability raster
+
+import os, arcpy
+from arcpy.sa import *
+
+# CHANGE WORKSAPCE HERE
+directory = r"\\Mac\Home\Desktop\Python_Challenges\Midterm"
+arcpy.env.workspace = directory
+tempDirectory = os.path.join(directory, "intermediate_files")
+if not os.path.exists(tempDirectory):
+    os.mkdir(tempDirectory)
+
+
+# Instead of working with the entire state of RI, I want to isolate SOUTH KINGSTON and set that as my processing extent
+
+in_features = "towns.shp"
+out_feature_class = os.path.join(tempDirectory, "SouthKingstown.shp")
+where_clause = '"NAME" = ' + "'SOUTH KINGSTOWN'"
+
+arcpy.Select_analysis(in_features, out_feature_class, where_clause)
+
+
+if arcpy.Exists(out_feature_class):
+    print "Town selection successful"
+
+desc = arcpy.Describe(out_feature_class)
+YMin = desc.extent.YMin
+YMax = desc.extent.YMax
+XMin = desc.extent.XMin
+XMax = desc.extent.XMax
+
+arcpy.env.extent = arcpy.Extent(XMin, YMin, XMax, YMax)
+print("Extent:\n YMin: {0},\n YMax: {1},\n XMin: {2},\n XMax: {3}".format(desc.extent.YMin, desc.extent.YMax,
+                                                                              desc.extent.XMin, desc.extent.XMax))
+
+
+# Create a list of just water feature from all shapefiles
+# Run loop to create a buffer and also converting to raster for all water features within processing extent
+
+waterFeatures = arcpy.ListFeatureClasses("*", "ALL")
+waterFeatures = [x for x in waterFeatures if "Building_polys" not in x]
+waterFeatures = [x for x in waterFeatures if "towns" not in x]
+print waterFeatures
+
+for x in waterFeatures:
+    print "Calculating Euclidean Distance for " + x
+    in_source_data = x + ".shp"
+    maximum_distance = 50
+    cell_size = 4
+    out_direction_raster = os.path.join(tempDirectory, x[0:5] + "_buffer.img")
+
+    arcpy.CheckOutExtension("Spatial")
+    outEucDistance = EucDistance(in_source_data, maximum_distance, cell_size, out_direction_raster)
+
+    in_raster = x[0:5] + "_buffer.img"
+    outIsNull = IsNull(in_raster)
+    outIsNull.save(os.path.join(tempDirectory, x[0:5] + "_restraint.img"))
+
+if arcpy.Exists(outIsNull):
+    print "Restraint raster completed for " + x
