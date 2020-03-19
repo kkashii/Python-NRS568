@@ -1,17 +1,12 @@
-# produce a small tool that takes advantage of arcpy and Python. You will need to provide example data, and the code
-# should run on all PC's. The tool needs to manipulate a dataset across three different processes, for example,
-# extracting, modifying and exporting data. The exact workflow is entirely up to yourself. You are expected to take
-# 3-4 hours on this coding assignment, and you should deposit your code and example files within a Github repository
-# for feedback and grading.
 
-
-# Workflow: Loosely recreate lab 5 from NRS 522 in code
+# Midterm Workflow: Loosely recreate lab 5 from NRS 522 in code
 # Isolate South Kingston and set as extent, create buffer around water features, overlay and create suitability raster
 
 import os, arcpy
 from arcpy.sa import *
 
 # CHANGE WORKSAPCE HERE
+
 directory = r"\\Mac\Home\Desktop\Python_Challenges\Midterm"
 arcpy.env.workspace = directory
 tempDirectory = os.path.join(directory, "intermediate_files")
@@ -46,23 +41,31 @@ print("Extent:\n YMin: {0},\n YMax: {1},\n XMin: {2},\n XMax: {3}".format(desc.e
 # Run loop to create a buffer and also converting to raster for all water features within processing extent
 
 waterFeatures = arcpy.ListFeatureClasses("*", "ALL")
-waterFeatures = [x for x in waterFeatures if "Building_polys" not in x]
 waterFeatures = [x for x in waterFeatures if "towns" not in x]
 print waterFeatures
 
 for x in waterFeatures:
-    print "Calculating Euclidean Distance for " + x
     in_source_data = x + ".shp"
-    maximum_distance = 50
+    maximum_distance = 100
     cell_size = 4
     out_direction_raster = os.path.join(tempDirectory, x[0:5] + "_buffer.img")
 
     arcpy.CheckOutExtension("Spatial")
     outEucDistance = EucDistance(in_source_data, maximum_distance, cell_size, out_direction_raster)
 
+    print "Euclidean Distance calculated for " + x
+
+# With the newly created buffer rasters, am now going to run the IS NULL tool to labels and buffer area as a 0
+# and non-buffer areas as 1
+
+for files in tempDirectory:
     in_raster = x[0:5] + "_buffer.img"
-    outIsNull = IsNull(in_raster)
+    outIsNull = arcpy.gp.IsNull(in_raster)
     outIsNull.save(os.path.join(tempDirectory, x[0:5] + "_restraint.img"))
 
-if arcpy.Exists(outIsNull):
+if arcpy.Exists(x[0:5] + "_restraint.img"):
     print "Restraint raster completed for " + x
+
+
+# Lastly I am multiplying all the restraint rasters together to give me the final suitability raster, aka all the land
+# in South Kingstown that is outside a 100 foot buffer from any body of water.
