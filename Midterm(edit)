@@ -1,9 +1,13 @@
-
 # Midterm Workflow: Loosely recreate lab 5 from NRS 522 in code
 # Isolate South Kingston and set as extent, create buffer around water features, overlay and create suitability raster
 
+# First I am importing the os and arcpy modules as well as setting the work environment. I am creating a temporary
+# work space for the intermediate files. Later i will delete this folder.
+
 import os, arcpy
 from arcpy.sa import *
+arcpy.CheckOutExtension("Spatial")
+arcpy.env.overwriteOutput = True
 
 # CHANGE WORKSAPCE HERE
 
@@ -38,7 +42,7 @@ print("Extent:\n YMin: {0},\n YMax: {1},\n XMin: {2},\n XMax: {3}".format(desc.e
 
 
 # Create a list of just water feature from all shapefiles
-# Run loop to create a buffer and also converting to raster for all water features within processing extent
+# Run loop to create a buffer layer by also converting to raster for all water features within processing extent
 
 waterFeatures = arcpy.ListFeatureClasses("*", "ALL")
 waterFeatures = [x for x in waterFeatures if "towns" not in x]
@@ -50,22 +54,43 @@ for x in waterFeatures:
     cell_size = 4
     out_direction_raster = os.path.join(tempDirectory, x[0:5] + "_buffer.img")
 
-    arcpy.CheckOutExtension("Spatial")
     outEucDistance = EucDistance(in_source_data, maximum_distance, cell_size, out_direction_raster)
 
     print "Euclidean Distance calculated for " + x
 
-# With the newly created buffer rasters, am now going to run the IS NULL tool to labels and buffer area as a 0
+
+# With the newly created buffer rasters, am now going to run the IS NULL tool to label the buffer areas as a 0
 # and non-buffer areas as 1
 
-for files in tempDirectory:
-    in_raster = x[0:5] + "_buffer.img"
-    outIsNull = arcpy.gp.IsNull(in_raster)
-    outIsNull.save(os.path.join(tempDirectory, x[0:5] + "_restraint.img"))
+arcpy.env.workspace = tempDirectory
 
-if arcpy.Exists(x[0:5] + "_restraint.img"):
-    print "Restraint raster completed for " + x
+buffer_lyr = arcpy.ListRasters("*", "ALL")
+print buffer_lyr
+
+for y in buffer_lyr:
+    in_raster = y
+    outIsNull = arcpy.sa.IsNull(in_raster)
+    outIsNull.save(os.path.join(tempDirectory, y[0:5] + "_restraint.img"))
+
+    print "Restraint raster created for " + y
 
 
 # Lastly I am multiplying all the restraint rasters together to give me the final suitability raster, aka all the land
-# in South Kingstown that is outside a 100 foot buffer from any body of water.
+# in South Kingstown that is outside a 100 foot buffer from any body of water. This can represent areas in SK
+# that can  be developed. 
+
+
+input = 'Float("' + '"wetla_restraint.img"' + '" * "' + '"River_restraint.img"' + '" * "' + '"Lakes_restraint.img")'
+print input
+arcpy.gp.RasterCalculator_sa(input, os.path.join(directory, "final_suitability.img"))
+
+
+arcpy.gp.RasterCalculator_sa('Float("wetla_restraint.img" * "River_restraint.img" * "Lakes_restraint.img")',
+                             os.path.join(directory, "final_suitability.img"))
+
+print 'Final suitability raster created!'
+
+# I am deleting all the intermediate files that I stored in the interediate folder by simply deleting the entire folder.
+
+arcpy.Delete_management(tempDirectory)
+print "Intermediate files deleted"
