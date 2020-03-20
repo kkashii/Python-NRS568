@@ -4,7 +4,7 @@
 # First I am importing the os and arcpy modules as well as setting the work environment. I am creating a temporary
 # work space for the intermediate files. Later i will delete this folder.
 
-import os, arcpy
+import os, arcpy, shutil
 from arcpy.sa import *
 arcpy.CheckOutExtension("Spatial")
 arcpy.env.overwriteOutput = True
@@ -77,20 +77,18 @@ for y in buffer_lyr:
 
 # Lastly I am multiplying all the restraint rasters together to give me the final suitability raster, aka all the land
 # in South Kingstown that is outside a 100 foot buffer from any body of water. This can represent areas in SK
-# that can  be developed. 
+# that can  be developed.
 
+arcpy.env.workspace = tempDirectory
 
-input = 'Float("' + '"wetla_restraint.img"' + '" * "' + '"River_restraint.img"' + '" * "' + '"Lakes_restraint.img")'
-print input
+input = '"wetla_restraint.img" * "River_restraint.img" * "Lakes_restraint.img"'
+
 arcpy.gp.RasterCalculator_sa(input, os.path.join(directory, "final_suitability.img"))
-
-
-arcpy.gp.RasterCalculator_sa('Float("wetla_restraint.img" * "River_restraint.img" * "Lakes_restraint.img")',
-                             os.path.join(directory, "final_suitability.img"))
 
 print 'Final suitability raster created!'
 
+
 # I am deleting all the intermediate files that I stored in the interediate folder by simply deleting the entire folder.
 
-arcpy.Delete_management(tempDirectory)
+shutil.rmtree(tempDirectory)
 print "Intermediate files deleted"
