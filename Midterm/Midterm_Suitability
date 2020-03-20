@@ -90,5 +90,8 @@ print 'Final suitability raster created!'
 
 # I am deleting all the intermediate files that I stored in the interediate folder by simply deleting the entire folder.
 
+arcpy.Delete_management(r"'SouthKingstown' ; 'Lakes_buffer' ; 'Lakes_restraint' ; 'wetla_buffer' ; 'wetla_restraint' ; 'River_buffer' ; 'River_restraint'")
+
 shutil.rmtree(tempDirectory)
+
 print "Intermediate files deleted"
