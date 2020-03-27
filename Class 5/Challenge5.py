@@ -126,6 +126,6 @@ for x in species_list:
         print "Created Heatmap file successfully!"
 
 # Deleting the intermediate files with proof that they were created by the if acpy.exists commands.
-     print "Deleting intermediate files"
-     arcpy.Delete_management(target_features)
-     arcpy.Delete_management(join_features)
+print "Deleting intermediate files"
+arcpy.Delete_management(target_features)
+arcpy.Delete_management(join_features)
