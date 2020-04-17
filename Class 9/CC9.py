@@ -110,3 +110,9 @@ arcpy.Buffer(in_features, out_feature_class, buffer_distance, line_side, line_en
 print "Buffer features created"
 
 
+# Add field to radiating lines attribute table and equate site code to all associated radiating lines
+# arcpy.AddField_management(table, "Site_Code", "TEXT", field_length=20)
+
+# cursor = arcpy.da.InsertCursor(table, ["Field1"])
+
+
