@@ -45,6 +45,7 @@ for i in input_locations:
     angle = 10
 
     OutputFeature = os.path.join(out_path, out_name)
+    OutFeat = out_name
 
     angles = range(0, 360, angle)
 
@@ -55,7 +56,7 @@ for i in input_locations:
         (end_x, end_y) = (origin_x + disp_x, origin_y + disp_y)
         (end2_x, end2_y) = (origin_x + disp_x, origin_y + disp_y)
 
-        cur = arcpy.InsertCursor(OutputFeature)
+        cur = arcpy.InsertCursor(OutFeat)
         lineArray = arcpy.Array()
 
         start = arcpy.Point()
