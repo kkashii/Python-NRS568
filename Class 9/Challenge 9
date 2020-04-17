@@ -17,7 +17,7 @@ fields = ['SHAPE@XY', 'Site_Code']
 input_locations = []
 with arcpy.da.SearchCursor(input_shp, fields) as cursor:
     for row in cursor:
-        input_locations.append(row[0])
+        input_locations.append(row)
 print input_locations
 
 
@@ -26,51 +26,22 @@ sp_ref = arcpy.Describe(input_shp).spatialReference.factoryCode
 print sp_ref
 
 
-# Maybe Ignore???? trying out differnt ways to format coordinates
-#         input_locations = (u'({0}, {1})'.format(row[0][0], row[0][1]))
-#         print input_locations
-#
-#
-# coordinates = []
-# for i in input_locations:
-#     coordinates.append(input_locations.strip())
-# print coordinates
-#
-#
-# coordinates = map(str, coordinates)
-# print coordinates
-#
-#
-# input_coords = []
-# for j in coordinates:
-#     coordinates.split(", ")
-#     input_coords.append(float(coordinates))
-# print input_coords
-
-# input_coords = []
-# def xy(input_coords):
-#     for j in coordinates:
-#         input_coords.append(coordinates.split(,))
-
-
-
 # Radiating line new shape file code
-
-out_path = arcpy.env.workspace
-out_name = "radiating_lines.shp"
-geometry_type = "POLYLINE"
-template = "#"
-has_m = "DISABLED"
-has_z = "DISABLED"
-
-spatial_ref = 32130
-
-arcpy.CreateFeatureclass_management(out_path, out_name, geometry_type, template,
-                                    has_m, has_z, spatial_ref)
-
 for i in input_locations:
-    origin_x, origin_y = i[0], i[1]
-    distance = 1
+    out_path = arcpy.env.workspace
+    out_name = "radiating_lines_" + row[1]
+    geometry_type = "POLYLINE"
+    template = "#"
+    has_m = "DISABLED"
+    has_z = "DISABLED"
+
+    spatial_ref = 32130
+
+    arcpy.CreateFeatureclass_management(out_path, out_name, geometry_type, template,
+                                        has_m, has_z, spatial_ref)
+
+    origin_x, origin_y = i[0][0], i[0][1]
+    distance = 1000
     angle = 10
 
     OutputFeature = os.path.join(out_path, out_name)
@@ -102,18 +73,39 @@ for i in input_locations:
         lineArray.removeAll()
         del cur
 
-print "Radiating Lines shapefile created successfully"
+        print "Radiating Lines shapefile created successfully"
 
 
-# Make sure coastline spref is the same as the other files
-sp_ref2 = arcpy.Describe("NB_Coastline.shp").spatialReference.factoryCode
-print sp_ref2
+    # Clip radiating line to coast
+    in_features = "radiating_lines" + row[1]
+    clip_features = "NB_Coastline.shp"
+    out_feature_class = os.path.join(out_path, "RadLines_clip")
+    xy_tolerance = ""
 
-# Clip radiating line to coast
-in_features = "radiating_lines.shp"
-clip_features = "NB_Coastline.shp"
-out_feature_class = os.pth.join(out_path, "RadLines_clip")
-xy_tolerance = ""
+    arcpy.Clip_analysis(in_features, clip_features, out_feature_class, xy_tolerance)
+    print "Clip features complete for " + row[1]
 
-# Execute Clip
-arcpy.Clip_analysis(in_features, clip_features, out_feature_class, xy_tolerance)
+
+# Split broken up radiating lines into individual lines
+multi_input = "radiating_lines" + row[1]
+multi_output = os.path.join(out_path, "fetch_lines" + row[1])
+
+arcpy.MultipartToSinglepart_management(multi_input, multi_output)
+print "Radiating lines split"
+
+
+# Creating buffer around each point in order to include lines only intersecting with points
+in_features = "Site_Location.shp"
+out_feature = os.path.join(out_path, row[1] + "_buffer.shp")
+buffer_distance = 10
+line_side = "FULL"
+line_end_type = "ROUND"
+dissolve_option = "NONE"
+dissolve_field = ""
+method = "GEODESIC"
+
+arcpy.Buffer(in_features, out_feature_class, buffer_distance, line_side, line_end_type, dissolve_option,
+           dissolve_field, method)
+print "Buffer features created"
+
+
