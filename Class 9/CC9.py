@@ -8,6 +8,7 @@
 import arcpy, os
 from math import radians, sin, cos
 arcpy.env.workspace = r"\\Mac\Home\Desktop\Python_Challenges\Class9\CC9"
+arcpy.env.overwriteOutput = True
 
 
 # Extract coordinates from point shp file
@@ -29,7 +30,7 @@ print sp_ref
 # Radiating line new shape file code
 for i in input_locations:
     out_path = arcpy.env.workspace
-    out_name = "radiating_lines_" + row[1]
+    out_name = "radiating_lines_" + i[1] + ".shp"
     geometry_type = "POLYLINE"
     template = "#"
     has_m = "DISABLED"
@@ -41,7 +42,7 @@ for i in input_locations:
                                         has_m, has_z, spatial_ref)
 
     origin_x, origin_y = i[0][0], i[0][1]
-    distance = 1000
+    distance = 100000
     angle = 10
 
     OutputFeature = os.path.join(out_path, out_name)
@@ -78,41 +79,53 @@ for i in input_locations:
 
 
     # Clip radiating line to coast
-    in_features = "radiating_lines" + row[1]
+    in_features = OutFeat
     clip_features = "NB_Coastline.shp"
-    out_feature_class = os.path.join(out_path, "RadLines_clip")
+    out_feature_class = os.path.join(out_path, "RadLines_clip" + i[1] + ".shp")
     xy_tolerance = ""
 
     arcpy.Clip_analysis(in_features, clip_features, out_feature_class, xy_tolerance)
-    print "Clip features complete for " + row[1]
+    print "Clip features complete for " + i[1]
 
 
-# Split broken up radiating lines into individual lines
-multi_input = "radiating_lines" + row[1]
-multi_output = os.path.join(out_path, "fetch_lines" + row[1])
+    # Split broken up radiating lines into individual lines
+    multi_input = out_feature_class
+    multi_output = os.path.join(out_path, "Fetch_Lines_" + i[1] + ".shp")
 
-arcpy.MultipartToSinglepart_management(multi_input, multi_output)
-print "Radiating lines split"
-
-
-# Creating buffer around each point in order to include lines only intersecting with points
-in_features = "Site_Location.shp"
-out_feature = os.path.join(out_path, row[1] + "_buffer.shp")
-buffer_distance = 10
-line_side = "FULL"
-line_end_type = "ROUND"
-dissolve_option = "NONE"
-dissolve_field = ""
-method = "GEODESIC"
-
-arcpy.Buffer(in_features, out_feature_class, buffer_distance, line_side, line_end_type, dissolve_option,
-           dissolve_field, method)
-print "Buffer features created"
+    arcpy.MultipartToSinglepart_management(multi_input, multi_output)
+    print "Radiating lines split"
 
 
-# Add field to radiating lines attribute table and equate site code to all associated radiating lines
-# arcpy.AddField_management(table, "Site_Code", "TEXT", field_length=20)
+    # Creating buffer around each point in order to include lines only intersecting with points
+    sites = arcpy.MakeFeatureLayer_management("Site_Locations.shp")
 
-# cursor = arcpy.da.InsertCursor(table, ["Field1"])
+    query = '"Site_Code"' + " = " + "'" + i[1] + "'"
+    print query
+
+    arcpy.SelectLayerByAttribute_management(sites, "NEW_SELECTION", query)
+
+    in_feature_class = sites
+    out_feature_class = os.path.join(out_path, "Buffer_" + i[1] + ".shp")
+    buffer_distance = "10 Meters"
+    line_side = "FULL"
+    line_end_type = "ROUND"
+    dissolve_option = "NONE"
+    dissolve_field = ""
+    method = "PLANAR"
+
+    arcpy.Buffer_analysis(in_feature_class, out_feature_class, buffer_distance, line_side, line_end_type,
+                          dissolve_option, dissolve_field, method)
+    print "Buffer features created"
 
 
+    # Add geometry attribute to calculate length of fetch lines
+    in_geo = "Fetch_Lines_" + i[1] + ".shp"
+    properties = "LENGTH"
+    length_unit = ""
+    area_unit = ""
+    coordinate_system = ""
+
+    # Generate the length field 
+    arcpy.AddGeometryAttributes_management(in_geo, properties, length_unit, area_unit, coordinate_system)
+    
+    # I then selected the lines by hand and generated statistics summary to determine su and std dev
