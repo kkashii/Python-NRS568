@@ -26,6 +26,7 @@ print input_locations
 sp_ref = arcpy.Describe(input_shp).spatialReference.factoryCode
 print sp_ref
 
+stats_list = []
 
 # Radiating line new shape file code
 for i in input_locations:
@@ -118,14 +119,37 @@ for i in input_locations:
     print "Buffer features created"
 
 
-    # Add geometry attribute to calculate length of fetch lines
-    in_geo = "Fetch_Lines_" + i[1] + ".shp"
+    # Select fetch lines interesting with site point buffer
+    arcpy.MakeFeatureLayer_management(multi_output, "fetch_lines")
+    arcpy.MakeFeatureLayer_management(out_feature_class, "pt_buffer")
+
+    arcpy.SelectLayerByLocation_management("fetch_lines", "INTERSECT", "pt_buffer", "", "NEW_SELECTION", "NOT_INVERT")
+
+    arcpy.CopyFeatures_management("fetch_lines", "Final_FetchLines_" + i[1] + ".shp")
+
+
+    # Add geometry attribute to fetch lines in order to calculate distance
+    in_geo = "Final_Fetch_Lines_" + i[1] + ".shp"
     properties = "LENGTH"
     length_unit = ""
     area_unit = ""
     coordinate_system = ""
 
-    # Generate the length field 
     arcpy.AddGeometryAttributes_management(in_geo, properties, length_unit, area_unit, coordinate_system)
-    
-    # I then selected the lines by hand and generated statistics summary to determine su and std dev
+
+
+    # Create stats table using search cursor
+    in_table = in_geo
+    out_table = "stats_table" + i[1] + ".dbf"
+    stat_fields = [['LENGTH', 'SUM'], ['LENGTH', 'STD']]
+
+    arcpy.Statistics_analysis(in_table, out_table, stat_fields, '')
+
+    stats_list.append("stats_table" + i[1] + ".dbf")
+
+# Generate Stats
+for item in stats_list:
+    with arcpy.da.SearchCursor(item, ['FREQUENCY', 'SUM_LENGTH', 'STD_LENGTH']) as cursor:
+        print item
+        for row in cursor:
+            print(row)
