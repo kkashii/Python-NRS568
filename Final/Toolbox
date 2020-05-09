@@ -1,0 +1,222 @@
+import arcpy
+
+class Toolbox(object):
+    def __init__(self):
+        """Define the toolbox (the name of the toolbox is the name of the
+        .pyt file)."""
+        self.label = "KOS_Final_Toolbox"
+        self.alias = ""
+
+        # List of tool classes associated with this toolbox
+        self.tools = [DEM, NDVI, BufferArea]
+
+
+class DEM(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "LAS Dataset to DEM"
+        self.description = "This tool will convert an LAS Dataset to a Digital Elevation Model (DEM)"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        params = []
+        input_LAS = arcpy.Parameter(name="input_LAS",
+                                     displayName="Input Ground Return LAS",
+                                     datatype="DELasDataset",
+                                     parameterType="Required",
+                                     direction="Input")
+        params.append(input_LAS)
+        output = arcpy.Parameter(name="output",
+                                 displayName="Output DEM",
+                                 datatype="GPRasterLayer",
+                                 parameterType="Required",
+                                 direction="Output")
+        params.append(output)
+        return params
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, parameters, messages):
+        """The source code of the tool."""
+        input_LAS = parameters[0].valueAsText
+        output = parameters[1].valueAsText
+
+        arcpy.LasDatasetToRaster_conversion(
+            in_las_dataset=input_LAS,
+            out_raster=output, value_field="ELEVATION",
+            interpolation_type="BINNING AVERAGE LINEAR", data_type="FLOAT", sampling_type="CELLSIZE",
+            sampling_value="1", z_factor="1")
+        arcpy.AddMessage("DEM created!")
+        return
+
+
+class NDVI(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "NDVI"
+        self.description = "This tool will create an NDVI by simply inputting the location of the folder containing the band rasters."
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        params = []
+        input_files = arcpy.Parameter(name="input_files",
+                                     displayName="Input Folder Destination",
+                                     datatype="DEFolder",
+                                     parameterType="Required",
+                                     direction="Input")
+        params.append(input_files)
+        output_ndvi = arcpy.Parameter(name="output_ndvi",
+                                 displayName="Output NDVI Raster",
+                                 datatype="GPRasterLayer",
+                                 parameterType="Required",
+                                 direction="Output")
+        params.append(output_ndvi)
+        return params
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, parameters, messages):
+        """The source code of the tool."""
+        input_files = parameters[0].valueAsText
+        output_ndvi = parameters[1].valueAsText
+
+        arcpy.env.workspace = input_files
+        B4 = arcpy.ListRasters("*", "TIF")
+        B4 = [x for x in B4 if "B4" in x]
+        B5 = arcpy.ListRasters("*", "TIF")
+        B5 = [x for x in B5 if "B5" in x]
+
+        equation = 'Float("' + B5[0] + '" - "' + B4[0] + '") / Float("' + B5[0] + '" + "' + B4[0] + '")'
+
+        arcpy.gp.RasterCalculator_sa(equation, output_ndvi)
+        arcpy.AddMessage("NDVI created!")
+        return
+
+
+class BufferArea(object):
+    def __init__(self):
+        """Define the tool (tool name is the name of the class)."""
+        self.label = "Buffer and Calculated Area"
+        self.description = "This tool will create a full round buffer for up to 3 feature classes and will calculate the area of the buffer area"
+        self.canRunInBackground = False
+
+    def getParameterInfo(self):
+        """Define parameter definitions"""
+        params = []
+        input1 = arcpy.Parameter(name="Input1",
+                                     displayName="Input Feature Class",
+                                     datatype="DEFeatureClass",
+                                     parameterType="Required",
+                                     direction="Input")
+        params.append(input1)
+        dist1 = arcpy.Parameter(name="distance",
+                                     displayName="Buffer Distance (Linear Unit; Field)",
+                                     datatype="GPString",
+                                     parameterType="Required",
+                                     direction="Input")
+        params.append(dist1)
+        area_unit1 = arcpy.Parameter(name="area unit 1",
+                                displayName="Area Unit",
+                                datatype="GPString",
+                                parameterType="Required",
+                                direction="Input")
+        params.append(area_unit1)
+        output1 = arcpy.Parameter(name="Output1",
+                                  displayName="Output Buffer",
+                                  datatype="DEFeatureClass",
+                                  parameterType="Required",
+                                  direction="Output")
+        params.append(output1)
+        input2 = arcpy.Parameter(name="Input2",
+                                 displayName="Input Feature Class 2 (Optional)",
+                                 datatype="DEFeatureClass",
+                                 parameterType="Optional",
+                                 direction="Input")
+        params.append(input2)
+        dist2 = arcpy.Parameter(name="distance2",
+                                     displayName="Buffer Distance 2 (Linear Unit; Field)",
+                                     datatype="GPString",
+                                     parameterType="Optional",
+                                     direction="Input")
+        params.append(dist2)
+        area_unit2 = arcpy.Parameter(name="area unit 2",
+                                     displayName="Area Unit 2",
+                                     datatype="GPString",
+                                     parameterType="Optional",
+                                     direction="Input")
+        params.append(area_unit2)
+        output2 = arcpy.Parameter(name="Output2",
+                                  displayName="Output Buffer 2 (Optional)",
+                                  datatype="DEFeatureClass",
+                                  parameterType="Optional",
+                                  direction="Output")
+        params.append(output2)
+        return params
+
+    def isLicensed(self):
+        """Set whether tool is licensed to execute."""
+        return True
+
+    def updateParameters(self, parameters):
+        """Modify the values and properties of parameters before internal
+        validation is performed.  This method is called whenever a parameter
+        has been changed."""
+        return
+
+    def updateMessages(self, parameters):
+        """Modify the messages created by internal validation for each tool
+        parameter.  This method is called after internal validation."""
+        return
+
+    def execute(self, parameters, messages):
+        """The source code of the tool."""
+        input1 = parameters[0].valueAsText
+        dist1 = parameters[1].valueAsText
+        area_unit1 = parameters[2].valueAsText
+        output1 = parameters[3].valueAsText
+        input2 = parameters[4].valueAsText
+        dist2 = parameters[5].valueAsText
+        area_unit2 = parameters[6].valueAsText
+        output2 = parameters[7].valueAsText
+
+        buffer_input = [input1, input2]
+        distance_values = [dist1, dist2]
+        area_units = [area_unit1, area_unit2]
+        buffer_output = [output1, output2]
+
+        for x in buffer_input:
+            arcpy.Buffer_analysis(buffer_input[0], buffer_output[0], distance_values[0], "FULL",
+                                  "ROUND", "NONE", "", "PLANAR")
+
+            arcpy.AddGeometryAttributes_management(buffer_output[0], "AREA_GEODESIC", "", area_units[0], "")
+
+        arcpy.AddMessage("Buffer created and area field calculated!")
+        return
