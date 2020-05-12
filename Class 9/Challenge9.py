@@ -7,7 +7,7 @@
 
 import arcpy, os
 from math import radians, sin, cos
-arcpy.env.workspace = r"\\Mac\Home\Desktop\Python_Challenges\Class9\CC9"
+arcpy.env.workspace = r"C:\Course_ArcGIS_Python_Students\Python-NRS568\Class 9"
 arcpy.env.overwriteOutput = True
 
 
@@ -129,7 +129,7 @@ for i in input_locations:
 
 
     # Add geometry attribute to fetch lines in order to calculate distance
-    in_geo = "Final_Fetch_Lines_" + i[1] + ".shp"
+    in_geo = "Final_FetchLines_" + i[1] + ".shp"
     properties = "LENGTH"
     length_unit = ""
     area_unit = ""
